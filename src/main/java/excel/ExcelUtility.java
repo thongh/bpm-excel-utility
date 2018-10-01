@@ -2,6 +2,7 @@ package excel;
 
 import java.io.File;
 
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -27,45 +28,12 @@ public class ExcelUtility {
     public static final boolean isCreateFileMerge = false;
 
     public static void main(String[] args) {
-        System.out.println("Start App");
-        // String kwese = FOLDER + "Kwese Fields .xlsx";
-        // Workbook wbK = readExcelFile(kwese);
-        //
-        // String bringg = FOLDER + "Bringg fields.xlsx";
-        // Workbook wbB = readExcelFile(bringg);
-        //
-        // String superT = FOLDER + "Super Technites Tax clearance
-        // certificates.xlsx";
-        // Workbook wbT = readExcelFile(superT);
-        //
-        // String kweseBringgFileName = FOLDER + "KweseBringg.xlsx";
-        //
-        // /**
-        // * Merge 2 file Kwese Fields, Bringg fields by JobNum in Kwese Fields
-        // = CUMII
-        // * ORDER ID in Bringg fields This run take long time.
-        // */
-        // Workbook kb = null;
-        // if (isCreateFileMerge) {
-        // kb = mergerKweseBringg(kweseBringgFileName, wbK, wbB);
-        // } else {
-        // System.out.println("Loading file: " + kweseBringgFileName);
-        // kb = readExcelFile(kweseBringgFileName);
-        // }
-        // /**
-        // * Compare merge file with "Super Technites Tax clearance
-        // certificates" by
-        // * column ASSIGNED TEAM = Company Name No logic involve with column
-        // Valid Tax
-        // * clearance
-        // */
-        // String amountFileName = FOLDER + "Amount.xlsx";
-        // addColumnAmount(amountFileName, kb, wbT);
+//        System.out.println("Start App");
         mergeExcel("C:\\temp\\files\\", "Kwese Fields .xlsx", "Bringg fields.xlsx",
                 "Super Technites Tax clearance certificates.xlsx",
                 "KweseBringg.xlsx",
                 "Amount.xlsx");
-        System.out.println("----END APP----");
+//        System.out.println("----END APP----");
     }
 
     public static void mergeExcel(String folderPath, String kwesePath,
@@ -82,7 +50,6 @@ public class ExcelUtility {
             kwesePath = "Kwese Fields .xlsx";
         }
         kwesePath = folderPath + kwesePath;
-        System.out.println("kwesepath: " + kwesePath);
         Workbook wbK = readExcelFile(kwesePath);
 
         // Bringg
@@ -90,12 +57,11 @@ public class ExcelUtility {
             bringgPath = "Bringg fields.xlsx";
         }
         bringgPath = folderPath + bringgPath;
-        System.out.println("bringg path: " + bringgPath);
         Workbook wbB = readExcelFile(bringgPath);
 
         // superT
         if (superPath == "") {
-            superPath = "/tmp/files/Super Technites Tax clearance certificates.xlsx";
+            superPath = "Super Technites Tax clearance certificates.xlsx";
         }
         superPath = folderPath + superPath;
         Workbook wbT = readExcelFile(superPath);
@@ -114,7 +80,6 @@ public class ExcelUtility {
         if (isCreateFileMerge) {
             kb = mergerKweseBringg(kweseBringgPath, wbK, wbB);
         } else {
-            System.out.println("Loading file: " + kweseBringgPath);
             kb = readExcelFile(kweseBringgPath);
         }
 
@@ -132,7 +97,7 @@ public class ExcelUtility {
 
     private static void addColumnAmount(String amountFileName, Workbook kb,
             Workbook wbT) {
-        System.out.println("------");
+//        System.out.println("------");
         List<Cell[]> tData = getAllFromTaxClearance(wbT);
         Iterator<Row> kbIter = kb.getSheetAt(0).iterator();
         Set<String> cpNotFoundLst = new HashSet<String>();
@@ -167,12 +132,12 @@ public class ExcelUtility {
                 cell.setCellValue(deduction);
             }
         }
-        System.out.println("---The name not found in Tax file are:---");
+//        System.out.println("---The name not found in Tax file are:---");
         for (String str : cpNotFoundLst) {
-            System.out.print(str + ", ");
+//            System.out.print(str + ", ");
         }
-        System.out.println();
-        System.out.println("---End of list not found---");
+//        System.out.println();
+//        System.out.println("---End of list not found---");
         try {
             FileOutputStream outputStream = new FileOutputStream(
                     amountFileName);
@@ -184,7 +149,7 @@ public class ExcelUtility {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Done create Excel");
+//        System.out.println("Done create Excel");
     }
 
     private static boolean findName(List<Cell[]> tData, String name) {
@@ -285,9 +250,9 @@ public class ExcelUtility {
             Workbook wbK, Workbook wbB) {
         List<Cell[]> kData = getDataFromWorkBook(wbK);
         List<Cell[]> bData = getDataFromWorkBook(wbB);
-        System.out.println("Read Data Finish");
+//        System.out.println("Read Data Finish");
 
-        System.out.println("Creating Merge Kwese-Bringg excel");
+//        System.out.println("Creating Merge Kwese-Bringg excel");
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet outS = workbook.createSheet("Result");
 
@@ -297,14 +262,14 @@ public class ExcelUtility {
         for (Cell[] kRow : kData) {
             Cell jobNumCell = kRow[3];// JOBNUM
             String jobNum = jobNumCell.getStringCellValue();
-            System.out.print("Search: " + jobNum);
+//            System.out.print("Search: " + jobNum);
             Cell[] bRow = findDataByJobNum(bData, jobNum);
             if (bRow != null) {
-                System.out.println(",Found: " + bRow[1].getStringCellValue());
+//                System.out.println(",Found: " + bRow[1].getStringCellValue());
                 createKBRow(outS, rowNum, kRow, bRow);
                 rowNum++;
             } else {
-                System.out.println();
+//                System.out.println();
             }
         }
 
@@ -318,7 +283,7 @@ public class ExcelUtility {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Done create Merge Kwese-Bringg excel");
+//        System.out.println("Done create Merge Kwese-Bringg excel");
         return workbook;
     }
 
