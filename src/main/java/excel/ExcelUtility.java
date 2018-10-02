@@ -45,20 +45,6 @@ public class ExcelUtility {
             folderPath = "/tmp/files/";
         }
 
-        // Kwese
-        if (kwesePath == "") {
-            kwesePath = "Kwese Fields .xlsx";
-        }
-        kwesePath = folderPath + kwesePath;
-        Workbook wbK = readExcelFile(kwesePath);
-
-        // Bringg
-        if (bringgPath == "") {
-            bringgPath = "Bringg fields.xlsx";
-        }
-        bringgPath = folderPath + bringgPath;
-        Workbook wbB = readExcelFile(bringgPath);
-
         // superT
         if (superPath == "") {
             superPath = "Super Technites Tax clearance certificates.xlsx";
@@ -78,6 +64,20 @@ public class ExcelUtility {
          */
         Workbook kb = null;
         if (isCreateFileMerge) {
+            // Kwese
+            if (kwesePath == "") {
+                kwesePath = "Kwese Fields .xlsx";
+            }
+            kwesePath = folderPath + kwesePath;
+            Workbook wbK = readExcelFile(kwesePath);
+
+            // Bringg
+            if (bringgPath == "") {
+                bringgPath = "Bringg fields.xlsx";
+            }
+            bringgPath = folderPath + bringgPath;
+            Workbook wbB = readExcelFile(bringgPath);
+
             kb = mergerKweseBringg(kweseBringgPath, wbK, wbB);
         } else {
             kb = readExcelFile(kweseBringgPath);
@@ -102,8 +102,11 @@ public class ExcelUtility {
         Iterator<Row> kbIter = kb.getSheetAt(0).iterator();
         Set<String> cpNotFoundLst = new HashSet<String>();
 
+        String name = "";
+        Row currentRow = null;
+        boolean isExistInTaxFile = false;
         while (kbIter.hasNext()) {
-            Row currentRow = kbIter.next();
+            currentRow = kbIter.next();
             // HEADER
             if (currentRow.getRowNum() == 0) {
                 Cell cell = currentRow.createCell(currentRow.getLastCellNum(),
@@ -113,7 +116,7 @@ public class ExcelUtility {
             }
             Cell cell = currentRow.createCell(currentRow.getLastCellNum(),
                     CellType.NUMERIC);
-            String name = "";
+            
             if (currentRow.getCell(16) != null && CellType.NUMERIC
                     .equals(currentRow.getCell(16).getCellType())) {
                 name = new String(
@@ -123,7 +126,7 @@ public class ExcelUtility {
                 name = currentRow.getCell(16).getStringCellValue().trim();// ASSIGNED
                                                                           // TEAM
             }
-            boolean isExistInTaxFile = findName(tData, name);
+            isExistInTaxFile = findName(tData, name);
             if (isExistInTaxFile) {
                 cell.setCellValue(AMOUNT);
             } else {
@@ -133,9 +136,9 @@ public class ExcelUtility {
             }
         }
 //        System.out.println("---The name not found in Tax file are:---");
-        for (String str : cpNotFoundLst) {
+        //for (String str : cpNotFoundLst) {
 //            System.out.print(str + ", ");
-        }
+        //}
 //        System.out.println();
 //        System.out.println("---End of list not found---");
         try {
@@ -153,20 +156,21 @@ public class ExcelUtility {
     }
 
     private static boolean findName(List<Cell[]> tData, String name) {
+        Cell[] row;
         for (int i = 0; i < tData.size(); i++) {
             // ignore header
             if (i < 4) {
                 continue;
             }
-            Cell[] row = tData.get(i);
+            row = tData.get(i);
             // Row do not have blank value cell
-            for (int j = 0; j < row.length; j++) {
+            //for (int j = 0; j < row.length; j++) {
                 Cell companyCell = row[0];// Name
                 String companyName = companyCell.getStringCellValue().trim();
                 if (companyName.equalsIgnoreCase(name)) {
                     return true;
                 }
-            }
+            //}
         }
         return false;
     }
@@ -174,15 +178,19 @@ public class ExcelUtility {
     private static List<Cell[]> getAllFromTaxClearance(Workbook wbT) {
         List<Cell[]> tData = new ArrayList<Cell[]>();
         Iterator<Row> iterator = wbT.getSheetAt(0).iterator();
+        Row currentRow = null;
+        Cell currentCell = null;
+        Cell[] rowData;
+        
         while (iterator.hasNext()) {
-            Row currentRow = iterator.next();
+            currentRow = iterator.next();
             Iterator<Cell> cellIterator = currentRow.iterator();
             List<Cell> rwDataLst = new ArrayList<Cell>();
             while (cellIterator.hasNext()) {
-                Cell currentCell = cellIterator.next();
+                currentCell = cellIterator.next();
                 rwDataLst.add(currentCell);
             }
-            Cell[] rowData = new Cell[rwDataLst.size()];
+            rowData = new Cell[rwDataLst.size()];
             rowData = rwDataLst.toArray(rowData);
             tData.add(rowData);
         }
@@ -194,13 +202,16 @@ public class ExcelUtility {
         Row row = outS.createRow(0);
 
         Iterator<Row> kIter = k.getSheetAt(0).iterator();
+        Row currentRow = null;
+        Cell writeCell = null;
+        Cell currentCell = null;
         while (kIter.hasNext()) {
-            Row currentRow = kIter.next();
+            currentRow = kIter.next();
             if (currentRow.getRowNum() == 0) {
                 Iterator<Cell> cellIterator = currentRow.iterator();
                 while (cellIterator.hasNext()) {
-                    Cell writeCell = row.createCell(colNum++);
-                    Cell currentCell = cellIterator.next();
+                    writeCell = row.createCell(colNum++);
+                    currentCell = cellIterator.next();
                     writeCell.setCellValue(currentCell.getStringCellValue());
                 }
             } else {
@@ -209,12 +220,12 @@ public class ExcelUtility {
         }
         Iterator<Row> bIter = b.getSheetAt(0).iterator();
         while (bIter.hasNext()) {
-            Row currentRow = bIter.next();
+            currentRow = bIter.next();
             if (currentRow.getRowNum() == 0) {
                 Iterator<Cell> cellIterator = currentRow.iterator();
                 while (cellIterator.hasNext()) {
-                    Cell writeCell = row.createCell(colNum++);
-                    Cell currentCell = cellIterator.next();
+                    writeCell = row.createCell(colNum++);
+                    currentCell = cellIterator.next();
                     writeCell.setCellValue(currentCell.getStringCellValue());
                 }
             } else {
@@ -227,19 +238,24 @@ public class ExcelUtility {
         // Kwese
         List<Cell[]> kData = new ArrayList<Cell[]>();
         Iterator<Row> iterator = wb.getSheetAt(0).iterator();
+        Row currentRow = null;
+        Cell currentCell = null;
+        List<Cell> rwDataLst = null;
+        Cell[] rowData;
+        
         while (iterator.hasNext()) {
-            Row currentRow = iterator.next();
+            currentRow = iterator.next();
             // Remove Header
             if (currentRow.getRowNum() == 0) {
                 continue;
             }
-            List<Cell> rwDataLst = new ArrayList<Cell>();
+            rwDataLst = new ArrayList<Cell>();
             for (int i = 0; i < currentRow.getLastCellNum(); i++) {
-                Cell currentCell = currentRow.getCell(i,
+                currentCell = currentRow.getCell(i,
                         Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                 rwDataLst.add(currentCell);
             }
-            Cell[] rowData = new Cell[rwDataLst.size()];
+            rowData = new Cell[rwDataLst.size()];
             rowData = rwDataLst.toArray(rowData);
             kData.add(rowData);
         }
@@ -258,18 +274,19 @@ public class ExcelUtility {
 
         createHeaderKB(outS, wbK, wbB);
 
+        Cell jobNumCell = null;
+        String jobNum = "";
+        Cell[] bRow;
         int rowNum = 1;
         for (Cell[] kRow : kData) {
-            Cell jobNumCell = kRow[3];// JOBNUM
-            String jobNum = jobNumCell.getStringCellValue();
+            jobNumCell = kRow[3];// JOBNUM
+            jobNum = jobNumCell.getStringCellValue();
 //            System.out.print("Search: " + jobNum);
-            Cell[] bRow = findDataByJobNum(bData, jobNum);
+            bRow = findDataByJobNum(bData, jobNum);
             if (bRow != null) {
 //                System.out.println(",Found: " + bRow[1].getStringCellValue());
                 createKBRow(outS, rowNum, kRow, bRow);
                 rowNum++;
-            } else {
-//                System.out.println();
             }
         }
 
@@ -292,8 +309,9 @@ public class ExcelUtility {
         int colNum = 0;
         Row row = outS.createRow(rowNum);
 
+        Cell writeCell = null;
         for (Cell inCell : kRow) {
-            Cell writeCell = row.createCell(colNum++);
+            writeCell = row.createCell(colNum++);
             if (inCell.getCellType().equals(CellType.STRING)) {
                 writeCell.setCellValue(inCell.getStringCellValue());
             } else if (inCell.getCellType().equals(CellType.NUMERIC)) {
@@ -305,7 +323,7 @@ public class ExcelUtility {
             }
         }
         for (Cell inCell : bRow) {
-            Cell writeCell = row.createCell(colNum++);
+            writeCell = row.createCell(colNum++);
             if (inCell.getCellType().equals(CellType.STRING)) {
                 writeCell.setCellValue(inCell.getStringCellValue());
             } else if (inCell.getCellType().equals(CellType.NUMERIC)) {
@@ -319,14 +337,15 @@ public class ExcelUtility {
     }
 
     private static Cell[] findDataByJobNum(List<Cell[]> bData, String jobNum) {
+        Cell cell = null;
         for (Cell[] row : bData) {
             // JobNum in Kwese Fields = CUMII ORDER ID in Bringg fields
-            for (int i = 0; i < row.length; i++) {
-                Cell cell = row[1];// CUMII ORDER ID
+            //for (int i = 0; i < row.length; i++) {
+                cell = row[1];// CUMII ORDER ID
                 if (cell.getStringCellValue().trim().equals(jobNum)) {
                     return row;
                 }
-            }
+            //}
         }
         return null;
     }
