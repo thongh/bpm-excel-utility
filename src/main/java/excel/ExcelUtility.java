@@ -1,7 +1,7 @@
 package excel;
 
 import java.io.File;
-
+import java.util.logging.Logger;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -21,6 +21,10 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExcelUtility {
+    
+    // assumes the current class is called MyLogger
+    private final static Logger LOGGER = Logger.getLogger(ExcelUtility.class.getName());
+    
     // public static final String FOLDER = "D:\\LibJar\\";
     public static final Integer AMOUNT = 1000;
 
@@ -36,10 +40,28 @@ public class ExcelUtility {
 //        System.out.println("----END APP----");
     }
 
+    
+    /**
+     * 
+     * Method to create an Excel file with the following rules:
+     *  - Read KweseBringg.xlsx
+     *  - Read Super Technites Tax clearance certificates.xlsx
+     *  - For each row in KweseBringg.xlsx add a cell AMOUNT 
+     *  - AMOUNT = 1000 if not have tax clearance
+     *  - AMOUNT = AMOUNT - AMOUNT * 0.1 if have tax clearance
+     *  - Produce final excel file with AMOUNT
+     * 
+     * @param folderPath: directory for the files
+     * @param kwesePath: kwese file name
+     * @param bringgPath: bringg file name
+     * @param superPath: super file name
+     * @param kweseBringgPath: kwese bringg file name
+     * @param amountPath: final excel file name
+     */
     public static void mergeExcel(String folderPath, String kwesePath,
             String bringgPath, String superPath, String kweseBringgPath,
             String amountPath) {
-
+        LOGGER.info("Start merge Excel: ");
         // Folder
         if (folderPath == "") {
             folderPath = "/tmp/files/";
@@ -93,54 +115,55 @@ public class ExcelUtility {
         }
         amountPath = folderPath + amountPath;
         addColumnAmount(amountPath, kb, wbT);
+        LOGGER.info("Done merge Excel: ");
     }
 
     private static void addColumnAmount(String amountFileName, Workbook kb,
             Workbook wbT) {
-//        System.out.println("------");
+        LOGGER.info("Start create AMOUNT cell: " + amountFileName);
+        
+        double amount = AMOUNT - AMOUNT * 0.1;
         List<Cell[]> tData = getAllFromTaxClearance(wbT);
         Iterator<Row> kbIter = kb.getSheetAt(0).iterator();
-        Set<String> cpNotFoundLst = new HashSet<String>();
-
         String name = "";
         Row currentRow = null;
         boolean isExistInTaxFile = false;
+        
+        int counter = 0;
         while (kbIter.hasNext()) {
+            LOGGER.info("loop through excel at: " + counter);
+            // Get current excel row
             currentRow = kbIter.next();
-            // HEADER
+            
+            // Set header, this only happens once
             if (currentRow.getRowNum() == 0) {
-                Cell cell = currentRow.createCell(currentRow.getLastCellNum(),
+                Cell cell = kbIter.next().createCell(currentRow.getLastCellNum(),
                         CellType.STRING);
                 cell.setCellValue("AMOUNT");
-                continue;
             }
+            
+            // Create numertic cell to store value
             Cell cell = currentRow.createCell(currentRow.getLastCellNum(),
                     CellType.NUMERIC);
-            
+            // Get assigned team
             if (currentRow.getCell(16) != null && CellType.NUMERIC
                     .equals(currentRow.getCell(16).getCellType())) {
                 name = new String(
-                        "" + currentRow.getCell(16).getNumericCellValue());// ASSIGNED
-                                                                           // TEAM
+                        "" + currentRow.getCell(16).getNumericCellValue());
             } else {
-                name = currentRow.getCell(16).getStringCellValue().trim();// ASSIGNED
-                                                                          // TEAM
+                name = currentRow.getCell(16).getStringCellValue().trim();
             }
+            // Check if this name is in the tax clearnance list
             isExistInTaxFile = findName(tData, name);
+            // Set amount value
             if (isExistInTaxFile) {
-                cell.setCellValue(AMOUNT);
-            } else {
-                cpNotFoundLst.add(name);
-                double deduction = AMOUNT - AMOUNT * 0.1;
-                cell.setCellValue(deduction);
+                amount = AMOUNT;
             }
+            cell.setCellValue(amount);
+            counter++;
         }
-//        System.out.println("---The name not found in Tax file are:---");
-        //for (String str : cpNotFoundLst) {
-//            System.out.print(str + ", ");
-        //}
-//        System.out.println();
-//        System.out.println("---End of list not found---");
+        
+        // After loop is done, create excel
         try {
             FileOutputStream outputStream = new FileOutputStream(
                     amountFileName);
@@ -152,30 +175,34 @@ public class ExcelUtility {
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        System.out.println("Done create Excel");
+        LOGGER.info("Done create AMOUNT cell: " + amountFileName);
     }
 
     private static boolean findName(List<Cell[]> tData, String name) {
+        LOGGER.info("Start checking tax clearnance for: " + name);
         Cell[] row;
+        boolean isTaxClearnance = false;
         for (int i = 0; i < tData.size(); i++) {
             // ignore header
             if (i < 4) {
                 continue;
             }
             row = tData.get(i);
-            // Row do not have blank value cell
-            //for (int j = 0; j < row.length; j++) {
-                Cell companyCell = row[0];// Name
-                String companyName = companyCell.getStringCellValue().trim();
-                if (companyName.equalsIgnoreCase(name)) {
-                    return true;
-                }
-            //}
+
+            Cell companyCell = row[0];// Name
+            String companyName = companyCell.getStringCellValue().trim();
+            if (companyName.equalsIgnoreCase(name)) {
+                isTaxClearnance = true;
+                break;
+            }
+        
         }
-        return false;
+        LOGGER.info("Done checking tax clearnance for: " + name);
+        return isTaxClearnance;
     }
 
     private static List<Cell[]> getAllFromTaxClearance(Workbook wbT) {
+        LOGGER.info("Start getAllFromTaxClearance: ");
         List<Cell[]> tData = new ArrayList<Cell[]>();
         Iterator<Row> iterator = wbT.getSheetAt(0).iterator();
         Row currentRow = null;
@@ -194,10 +221,12 @@ public class ExcelUtility {
             rowData = rwDataLst.toArray(rowData);
             tData.add(rowData);
         }
+        LOGGER.info("Done getAllFromTaxClearance: ");
         return tData;
     }
 
     private static void createHeaderKB(XSSFSheet outS, Workbook k, Workbook b) {
+        LOGGER.info("Start createHeaderKB: ");
         int colNum = 0;
         Row row = outS.createRow(0);
 
@@ -232,9 +261,11 @@ public class ExcelUtility {
                 break;
             }
         }
+        LOGGER.info("Done createHeaderKB: ");
     }
 
     private static List<Cell[]> getDataFromWorkBook(Workbook wb) {
+        LOGGER.info("Start getDataFromWorkBook: ");
         // Kwese
         List<Cell[]> kData = new ArrayList<Cell[]>();
         Iterator<Row> iterator = wb.getSheetAt(0).iterator();
@@ -259,6 +290,7 @@ public class ExcelUtility {
             rowData = rwDataLst.toArray(rowData);
             kData.add(rowData);
         }
+        LOGGER.info("Start getDataFromWorkBook: ");
         return kData;
     }
 
@@ -306,6 +338,7 @@ public class ExcelUtility {
 
     private static void createKBRow(XSSFSheet outS, int rowNum, Cell[] kRow,
             Cell[] bRow) {
+        LOGGER.info("Start create final excel row: " + rowNum);
         int colNum = 0;
         Row row = outS.createRow(rowNum);
 
@@ -334,9 +367,11 @@ public class ExcelUtility {
                 writeCell.setCellType(CellType.BLANK);
             }
         }
+        LOGGER.info("Done create final excel row: " + rowNum);
     }
 
     private static Cell[] findDataByJobNum(List<Cell[]> bData, String jobNum) {
+        LOGGER.info("Start findDataByJobNum: " + jobNum);
         Cell cell = null;
         for (Cell[] row : bData) {
             // JobNum in Kwese Fields = CUMII ORDER ID in Bringg fields
@@ -347,11 +382,13 @@ public class ExcelUtility {
                 }
             //}
         }
+        LOGGER.info("Done findDataByJobNum: " + jobNum);
         return null;
     }
 
     public static Workbook readExcelFile(String fileName) {
-        Workbook workbook = null;
+        LOGGER.info("Start reading excel: " + fileName);
+        Workbook workbook = null; 
         try {
             FileInputStream excelFile = new FileInputStream(new File(fileName));
             workbook = new XSSFWorkbook(excelFile);
@@ -360,6 +397,7 @@ public class ExcelUtility {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        LOGGER.info("Done reading excel: " + fileName);
         return workbook;
     }
 }
